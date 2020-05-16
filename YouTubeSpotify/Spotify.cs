@@ -12,6 +12,7 @@ static class Spotify
 
     private static SpotifyWebAPI spotify;
     private static PrivateProfile profile;
+    private static FullPlaylist playlist;
 
     private static bool completed = false;
 
@@ -23,11 +24,20 @@ static class Spotify
             System.Threading.Thread.Sleep(1000);
 
         // Creates a Spotify Playlist
-        FullPlaylist playlist = CreatePlaylist(profile.Id, nameOfPlaylist);
+        playlist = CreatePlaylist(profile.Id, nameOfPlaylist);
 
         // Adds all songs to a list
         List<string> tracks = GetTracks(songs);
         AddTracksToPlaylist(playlist, tracks);
+    }
+
+    public static void AddUnsureSongs(string[] songs)
+    {
+        List<string> tracks = GetTracks(songs, true);
+        if (tracks.Count != 0)
+        {
+            AddTracksToPlaylist(playlist, tracks);
+        }
     }
 
     static FullPlaylist CreatePlaylist(string id, string name)
@@ -35,7 +45,6 @@ static class Spotify
         var playlist = spotify.CreatePlaylist(id, name);
         if (playlist.HasError())
         {
-            System.Console.WriteLine(playlist.Error.Message);
             return null;
         }
 
@@ -46,31 +55,34 @@ static class Spotify
         ErrorResponse response = spotify.AddPlaylistTracks(playlist.Id, uris);
         if (response.HasError())
         {
-            Console.WriteLine(response.Error.Message);
             return false;
         }
         return true;
     }
-    static FullTrack GetTrack(string tag)
+    static FullTrack GetTrack(string tag, bool unsure = false)
     {
         SearchItem track = spotify.SearchItems(tag, SearchType.Track, 1);
-        if (track.HasError())
+        if (track.HasError() || track.Tracks.Items.Count == 0)
         {
-            notFoundSongs.Add(tag.Replace('+', ' '));
-            System.Console.WriteLine(track.Error.Message);
+            if (unsure)
+                notFoundSongs.Add(tag.Split(';')[1]);
+            else
+                notFoundSongs.Add(tag.Replace('+', ' '));
+
             return null;
         }
+
         return track.Tracks.Items[0];
     }
-    static List<string> GetTracks(string[] tags)
+    static List<string> GetTracks(string[] tags, bool unsure = false)
     {
         List<string> trackUris = new List<string>();
         foreach (var item in tags)
         {
-            string song = GetTrack(item).Uri;
+            var song = GetTrack(item, unsure);
             if (song == null)
                 continue;
-            trackUris.Add(song);
+            trackUris.Add(song.Uri);
         }
 
         return trackUris;

@@ -1,6 +1,20 @@
 import youtube_dl
+import re
+
+def get_song_of_title(title):
+    if '-' not in title:
+        if '"' not in title:
+            return title
+
+        result = re.search('"(.*)"', title)
+
+        return title.split(' ')[0] + "+" + result.group(1)
+
+    return title.split('-')[0]+ '+' + (title.split('-')[1]).split(' ')[1]
+
 
 songs = []
+failed = []
 
 playlist_url = ''
 
@@ -12,6 +26,9 @@ for song in playlist['entries']:
     try:
         songs.append(song["track"]+ "+" +song["artist"])
     except:
-        songs.append(song["title"])
+        failed.append(get_song_of_title(song["title"]) + ";" + song["title"])
+
+
 
 print(songs)
+print(failed)
