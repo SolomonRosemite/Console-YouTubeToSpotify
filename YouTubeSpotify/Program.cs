@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System;
 
 namespace YouTubeSpotify
@@ -10,29 +11,68 @@ namespace YouTubeSpotify
 
         static void Main(string[] args)
         {
-            songs = new string[]
-            {
-                "Mask Off+Future",
-                "Space Cadet+Metro Boomin",
-            };
+            ProcessStartInfo process = CreatePythonConnection
+            (
+                @"C:\Python38\python.exe",
+                "https://www.youtube.com/playlist?list=PLlYKDqBVDxX2KziuzmDlNhLpJjgLktB53"
+            );
 
-            unsureSongs = new string[]
-            {
-                // "This is How Easy It Is to Lie With Statistics;This is How Easy It Is to Lie With Statistics"
-            };
+            string results = GetResults(process);
 
-            Spotify.FinishPlaylist("Bank", songs);
+            // songs = new string[]
+            // {
+            //     "Mask Off+Future",
+            //     "Space Cadet+Metro Boomin",
+            // };
 
-            if (unsureSongs != null)
-                Spotify.AddUnsureSongs(unsureSongs);
+            // unsureSongs = new string[]
+            // {
+            //     // "This is How Easy It Is to Lie With Statistics;This is How Easy It Is to Lie With Statistics"
+            // };
 
-            if (Spotify.notFoundSongs.Count != 0)
-            {
-                Console.WriteLine("Songs that couldn't be added:\n");
+            // Spotify.FinishPlaylist("Bank", songs);
 
-                foreach (var item in Spotify.notFoundSongs)
-                    Console.WriteLine(item);
-            }
+            // if (unsureSongs != null)
+            //     Spotify.AddUnsureSongs(unsureSongs);
+
+            // if (Spotify.notFoundSongs.Count != 0)
+            // {
+            //     Console.WriteLine("Songs that couldn't be added:\n");
+
+            //     foreach (var item in Spotify.notFoundSongs)
+            //         Console.WriteLine(item);
+            // }
+        }
+
+        private static ProcessStartInfo CreatePythonConnection(string pythonPath, string url)
+        {
+            // Create Process Info
+            var psi = new ProcessStartInfo();
+            psi.FileName = pythonPath;
+
+            // Provide script and arguments
+            var script = "YouTube_DLApi.py";
+            var playlistUrl = url;
+
+            psi.Arguments = $"\"{script}\" \"{playlistUrl}\"";
+
+            // Process configuration
+            psi.UseShellExecute = false;
+            psi.CreateNoWindow = true;
+            psi.RedirectStandardOutput = true;
+            psi.RedirectStandardError = true;
+
+            return psi;
+        }
+
+        private static string GetResults(ProcessStartInfo processStartInfo)
+        {
+            var results = "";
+
+            using (var process = Process.Start(processStartInfo))
+                results = process.StandardOutput.ReadToEnd();
+
+            return results;
         }
     }
 }

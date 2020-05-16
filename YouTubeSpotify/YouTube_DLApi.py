@@ -1,6 +1,10 @@
 import youtube_dl
 import re
 
+import sys
+
+playlist_url = sys.argv[1]
+
 def get_song_of_title(title):
     if '-' not in title:
         if '"' not in title:
@@ -16,8 +20,6 @@ def get_song_of_title(title):
 songs = []
 failed = []
 
-playlist_url = ''
-
 playlist = youtube_dl.YoutubeDL({}).extract_info(playlist_url, download=False)
 
 print("\nSongs:\n")
@@ -27,7 +29,6 @@ for song in playlist['entries']:
         songs.append(song["track"]+ "+" +song["artist"])
     except:
         failed.append(get_song_of_title(song["title"]) + ";" + song["title"])
-
 
 
 print(songs)
