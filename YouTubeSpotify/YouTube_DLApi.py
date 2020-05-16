@@ -1,7 +1,7 @@
 import youtube_dl
-import re
-
+import json
 import sys
+import re
 
 playlist_url = sys.argv[1]
 
@@ -31,5 +31,6 @@ for song in playlist['entries']:
         failed.append(get_song_of_title(song["title"]) + ";" + song["title"])
 
 
-print(songs)
-print(failed)
+print(json.dumps(songs))
+print(':Split here:')
+print(json.dumps(failed))

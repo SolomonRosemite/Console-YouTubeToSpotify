@@ -1,47 +1,63 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System;
+
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace YouTubeSpotify
 {
     class Program
     {
-        public static string[] songs;
-        public static string[] unsureSongs;
+        private static string[] songs;
+        private static string[] unsureSongs;
+
+        private static string pathToPython = @"C:\Python38\python.exe";
+        private static string playlistUrl = "";
 
         static void Main(string[] args)
         {
-            ProcessStartInfo process = CreatePythonConnection
-            (
-                @"C:\Python38\python.exe",
-                "https://www.youtube.com/playlist?list=PLlYKDqBVDxX2KziuzmDlNhLpJjgLktB53"
-            );
+            string name = GetPlaylistname();
 
+            ProcessStartInfo process = CreatePythonConnection(pathToPython, playlistUrl);
             string results = GetResults(process);
+            int unsureSongsStartIndex;
 
-            // songs = new string[]
-            // {
-            //     "Mask Off+Future",
-            //     "Space Cadet+Metro Boomin",
-            // };
+            results = results.Substring(results.IndexOf("Songs:") + 6);
+            string songsResults = results.Remove(unsureSongsStartIndex = results.IndexOf(":Split here:"));
 
-            // unsureSongs = new string[]
-            // {
-            //     // "This is How Easy It Is to Lie With Statistics;This is How Easy It Is to Lie With Statistics"
-            // };
+            results = results.Substring(unsureSongsStartIndex + 12);
 
-            // Spotify.FinishPlaylist("Bank", songs);
+            JArray songsList = (JArray)JsonConvert.DeserializeObject(songsResults);
+            songs = songsList.ToObject<string[]>();
 
-            // if (unsureSongs != null)
-            //     Spotify.AddUnsureSongs(unsureSongs);
+            JArray unsureSongsList = (JArray)JsonConvert.DeserializeObject(results);
 
-            // if (Spotify.notFoundSongs.Count != 0)
-            // {
-            //     Console.WriteLine("Songs that couldn't be added:\n");
+            unsureSongs = unsureSongsList.Count != 0 ? unsureSongsList.ToObject<string[]>() : null;
 
-            //     foreach (var item in Spotify.notFoundSongs)
-            //         Console.WriteLine(item);
-            // }
+            Spotify.FinishPlaylist(name, songs);
+
+            if (unsureSongs != null)
+                Spotify.AddUnsureSongs(unsureSongs);
+
+            if (Spotify.notFoundSongs.Count != 0)
+            {
+                Console.WriteLine("Songs that couldn't be added:\n");
+
+                foreach (var item in Spotify.notFoundSongs)
+                    Console.WriteLine(item);
+            }
+
+            Console.WriteLine("Ratio: " + (((float)(songs.Length - Spotify.notFoundSongs.Count) / (float)songs.Length) * 100).ToString());
+            Console.WriteLine("Done");
+        }
+
+        private static string GetPlaylistname()
+        {
+            string name = Console.ReadLine();
+
+            Console.WriteLine("This might take a while... depending on the Playlist.");
+            Console.WriteLine("Loading...");
+            return name;
         }
 
         private static ProcessStartInfo CreatePythonConnection(string pythonPath, string url)
