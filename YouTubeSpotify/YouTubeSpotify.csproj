@@ -4,9 +4,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Json.Net" Version="1.0.22"/>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3"/>
     <PackageReference Include="SpotifyAPI.Web" Version="5.1.1"/>
     <PackageReference Include="SpotifyAPI.Web.Auth" Version="5.1.1"/>
+    <PackageReference Include="LongFixed-NYoutubeDL" Version="0.10.2"/>
   </ItemGroup>
 </Project>

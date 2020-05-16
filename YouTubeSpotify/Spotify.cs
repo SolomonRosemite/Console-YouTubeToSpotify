@@ -6,16 +6,16 @@ using SpotifyAPI.Web;
 using System.Collections.Generic;
 using System;
 
-using YouTubeSpotify;
-
 static class Spotify
 {
+    public static List<string> notFoundSongs = new List<string>();
+
     private static SpotifyWebAPI spotify;
     private static PrivateProfile profile;
 
     private static bool completed = false;
 
-    public static void FinishPlaylist(string nameOfPlaylist)
+    public static void FinishPlaylist(string nameOfPlaylist, string[] songs)
     {
         CredentialsAuth(Credentials.ClientID);
 
@@ -26,7 +26,7 @@ static class Spotify
         FullPlaylist playlist = CreatePlaylist(profile.Id, nameOfPlaylist);
 
         // Adds all songs to a list
-        List<string> tracks = GetTracks(Program.songs);
+        List<string> tracks = GetTracks(songs);
         AddTracksToPlaylist(playlist, tracks);
     }
 
@@ -56,6 +56,7 @@ static class Spotify
         SearchItem track = spotify.SearchItems(tag, SearchType.Track, 1);
         if (track.HasError())
         {
+            notFoundSongs.Add(tag.Replace('+', ' '));
             System.Console.WriteLine(track.Error.Message);
             return null;
         }
@@ -65,7 +66,12 @@ static class Spotify
     {
         List<string> trackUris = new List<string>();
         foreach (var item in tags)
-            trackUris.Add(GetTrack(item).Uri);
+        {
+            string song = GetTrack(item).Uri;
+            if (song == null)
+                continue;
+            trackUris.Add(song);
+        }
 
         return trackUris;
     }
