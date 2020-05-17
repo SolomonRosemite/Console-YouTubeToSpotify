@@ -1,8 +1,8 @@
-﻿using System.Diagnostics;
-using System;
-
-using Newtonsoft.Json.Linq;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Newtonsoft.Json;
+using System.IO;
+using System;
 
 namespace YouTubeSpotify
 {
@@ -16,23 +16,14 @@ namespace YouTubeSpotify
 
         static void Main(string[] args)
         {
+            File.Delete("data.json");
+
             string name = GetPlaylistname();
 
-            ProcessStartInfo process = CreatePythonConnection(pathToPython, playlistUrl);
-            string results = GetResults(process);
-            int unsureSongsStartIndex;
+            CreatePythonConnection(pathToPython, playlistUrl);
+            AssignArrays("data.json");
 
-            results = results.Substring(results.IndexOf("Songs:") + 6);
-            string songsResults = results.Remove(unsureSongsStartIndex = results.IndexOf(":Split here:"));
-
-            results = results.Substring(unsureSongsStartIndex + 12);
-
-            JArray songsList = (JArray)JsonConvert.DeserializeObject(songsResults);
-            songs = songsList.ToObject<string[]>();
-
-            JArray unsureSongsList = (JArray)JsonConvert.DeserializeObject(results);
-
-            unsureSongs = unsureSongsList.Count != 0 ? unsureSongsList.ToObject<string[]>() : null;
+            File.Delete("data.json");
 
             Spotify.FinishPlaylist(name, songs);
 
@@ -47,20 +38,40 @@ namespace YouTubeSpotify
                     Console.WriteLine(item);
             }
 
-            Console.WriteLine("Ratio: " + (((float)(songs.Length - Spotify.notFoundSongs.Count) / (float)songs.Length) * 100).ToString());
-            Console.WriteLine("Done");
+            System.Console.WriteLine(songs.Length);
+            System.Console.WriteLine(Spotify.notFoundSongs.Count);
+
+        }
+
+        private static void AssignArrays(string path)
+        {
+            // Read Json
+            string jsonFromFile;
+            using (var reader = new StreamReader(path))
+            {
+                jsonFromFile = reader.ReadToEnd();
+            }
+
+            var dictionary = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(jsonFromFile);
+
+            songs = dictionary["songs"].ToArray();
+
+            if (dictionary["unsureSongs"].Count != 0)
+            {
+                unsureSongs = dictionary["unsureSongs"].ToArray();
+            }
         }
 
         private static string GetPlaylistname()
         {
+            Console.Write("\nGive your Playlist a Name: ");
             string name = Console.ReadLine();
 
-            Console.WriteLine("This might take a while... depending on the Playlist.");
+            Console.WriteLine("This might take a while depending on the YouTube Playlist.");
             Console.WriteLine("Loading...");
             return name;
         }
-
-        private static ProcessStartInfo CreatePythonConnection(string pythonPath, string url)
+        private static void CreatePythonConnection(string pythonPath, string url)
         {
             // Create Process Info
             var psi = new ProcessStartInfo();
@@ -75,20 +86,9 @@ namespace YouTubeSpotify
             // Process configuration
             psi.UseShellExecute = false;
             psi.CreateNoWindow = true;
-            psi.RedirectStandardOutput = true;
-            psi.RedirectStandardError = true;
 
-            return psi;
-        }
-
-        private static string GetResults(ProcessStartInfo processStartInfo)
-        {
-            var results = "";
-
-            using (var process = Process.Start(processStartInfo))
-                results = process.StandardOutput.ReadToEnd();
-
-            return results;
+            var process = Process.Start(psi);
+            process.WaitForExit();
         }
     }
 }
