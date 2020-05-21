@@ -19,6 +19,7 @@ namespace YouTubeSpotify
             File.Delete("data.json");
 
             string name = GetPlaylistname();
+            playlistUrl = GetPlaylistUrl();
 
             CreatePythonConnection(pathToPython, playlistUrl);
             AssignArrays("data.json");
@@ -38,11 +39,18 @@ namespace YouTubeSpotify
                     Console.WriteLine(item);
             }
 
-            System.Console.WriteLine(songs.Length);
-            System.Console.WriteLine(Spotify.notFoundSongs.Count);
-
+            System.Console.WriteLine($"Total Songs: {songs.Length + (unsureSongs != null ? unsureSongs.Length : 0)}");
+            System.Console.WriteLine($"notFoundSongs Songs: {Spotify.notFoundSongs.Count}");
         }
 
+        private static string GetPlaylistUrl()
+        {
+            Console.Write("Paste in your YouTube Playlist: ");
+            var playlistUrl = Console.ReadLine().Trim();
+            Console.WriteLine("This might take a while depending on the YouTube Playlist.");
+            Console.WriteLine("Loading...");
+            return playlistUrl;
+        }
         private static void AssignArrays(string path)
         {
             // Read Json
@@ -61,14 +69,10 @@ namespace YouTubeSpotify
                 unsureSongs = dictionary["unsureSongs"].ToArray();
             }
         }
-
         private static string GetPlaylistname()
         {
             Console.Write("\nGive your Playlist a Name: ");
             string name = Console.ReadLine();
-
-            Console.WriteLine("This might take a while depending on the YouTube Playlist.");
-            Console.WriteLine("Loading...");
             return name;
         }
         private static void CreatePythonConnection(string pythonPath, string url)
